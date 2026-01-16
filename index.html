@@ -3,41 +3,69 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>发送器</title>
+    <title>安全发送器</title>
 </head>
 <body>
-    <h3>✨ 发消息</h3>
-    <!-- 输入框 -->
-    <textarea id="msg" style="width:100%; height:100px" placeholder="输入内容..."></textarea>
+    <h3>✨ 安全发送消息</h3>
+    
+    <!-- 设置区域 -->
+    <div style="margin-bottom: 20px; padding: 10px; background: #eee; border-radius: 5px;">
+        <input type="password" id="tokenInput" placeholder="在此粘贴你的 Token (ghp_...)" style="width:100%; padding: 8px; margin-bottom: 5px;">
+        <button onclick="saveToken()" style="padding: 5px 10px;">保存 Token 到浏览器</button>
+        <span id="tokenStatus" style="font-size: 12px; color: #666;"></span>
+    </div>
+
+    <!-- 发送区域 -->
+    <textarea id="msg" style="width:100%; height:100px" placeholder="输入要发送的内容..."></textarea>
     <br><br>
-    <!-- 按钮 -->
-    <button onclick="send()" style="width:100%; height:40px">发送</button>
-    <!-- 状态显示 -->
+    <button onclick="send()" style="width:100%; height:40px; background: #007bff; color: white; border: none; border-radius: 5px;">发送</button>
     <p id="status"></p>
 
     <script>
-        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
-        // 请修改下面这三行引号里的内容
-        const USER = "yuehaoaly";     // 第1处
-        const REPO = "magic-sender";       // 第2处
-        const TOKEN = "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";  // 第3处：刚才复制的Token
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+        // 只改这里：你的用户名和仓库名
+        const USER = "你的GitHub用户名"; 
+        const REPO = "magic-sender";
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // 页面加载时检查是否有保存的 Token
+        window.onload = function() {
+            const savedToken = localStorage.getItem("github_token");
+            if(savedToken) {
+                document.getElementById('tokenInput').value = savedToken;
+                document.getElementById('tokenStatus').innerText = "✅ 已从本地加载 Token";
+            }
+        }
+
+        function saveToken() {
+            const t = document.getElementById('tokenInput').value.trim();
+            if(t) {
+                localStorage.setItem("github_token", t);
+                document.getElementById('tokenStatus').innerText = "✅ Token 已保存";
+                alert("Token 已保存！下次不用再输了。");
+            }
+        }
 
         async function send() {
             const text = document.getElementById('msg').value;
+            const token = document.getElementById('tokenInput').value.trim();
             const status = document.getElementById('status');
             
+            if(!token) {
+                alert("请先填入 Token！");
+                return;
+            }
             if(!text) return;
+
             status.innerText = "正在发送...";
 
             try {
-                // 联网请求 GitHub 运行 Action
                 let url = `https://api.github.com/repos/${USER}/${REPO}/actions/workflows/send.yml/dispatches`;
                 
                 let resp = await fetch(url, {
                     method: 'POST',
                     headers: {
-                        'Authorization': `Bearer ${TOKEN}`,
+                        'Authorization': `Bearer ${token}`,
                         'Accept': 'application/vnd.github.v3+json'
                     },
                     body: JSON.stringify({
@@ -47,12 +75,13 @@
                 });
 
                 if (resp.ok) {
-                    status.innerText = "✅ 成功！请等待约30秒";
+                    status.innerText = "✅ 指令已发送！机器人正在处理（约30秒）";
+                    document.getElementById('msg').value = ""; // 清空输入框
                 } else {
                     status.innerText = "❌ 失败: " + await resp.text();
                 }
             } catch (e) {
-                status.innerText = "❌ 错误: " + e;
+                status.innerText = "❌ 网络错误: " + e;
             }
         }
     </script>
