@@ -1,0 +1,34 @@
+name: Send Message
+
+on:
+  workflow_dispatch:
+    inputs:
+      text:
+        description: '要发送的内容'
+        required: true
+        default: '测试消息'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+
+    - name: Install dependencies
+      run: |
+        pip install requests google-generativeai
+
+    - name: Run script
+      env:
+        TG_BOT_TOKEN: ${{ secrets.TG_BOT_TOKEN }}
+        TG_CHAT_ID: ${{ secrets.TG_CHAT_ID }}
+        GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+        USER_INPUT: ${{ inputs.text }}
+      run: python main.py
