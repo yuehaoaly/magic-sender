@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>发送器</title>
+</head>
+<body>
+    <h3>✨ 发消息</h3>
+    <!-- 输入框 -->
+    <textarea id="msg" style="width:100%; height:100px" placeholder="输入内容..."></textarea>
+    <br><br>
+    <!-- 按钮 -->
+    <button onclick="send()" style="width:100%; height:40px">发送</button>
+    <!-- 状态显示 -->
+    <p id="status"></p>
+
+    <script>
+        // ▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼▼
+        // 请修改下面这三行引号里的内容
+        const USER = "yuehaoaly";     // 第1处
+        const REPO = "magic-sender";       // 第2处
+        const TOKEN = "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";  // 第3处：刚才复制的Token
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        async function send() {
+            const text = document.getElementById('msg').value;
+            const status = document.getElementById('status');
+            
+            if(!text) return;
+            status.innerText = "正在发送...";
+
+            try {
+                // 联网请求 GitHub 运行 Action
+                let url = `https://api.github.com/repos/${USER}/${REPO}/actions/workflows/send.yml/dispatches`;
+                
+                let resp = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${TOKEN}`,
+                        'Accept': 'application/vnd.github.v3+json'
+                    },
+                    body: JSON.stringify({
+                        ref: 'main', 
+                        inputs: { text: text }
+                    })
+                });
+
+                if (resp.ok) {
+                    status.innerText = "✅ 成功！请等待约30秒";
+                } else {
+                    status.innerText = "❌ 失败: " + await resp.text();
+                }
+            } catch (e) {
+                status.innerText = "❌ 错误: " + e;
+            }
+        }
+    </script>
+</body>
+</html>
